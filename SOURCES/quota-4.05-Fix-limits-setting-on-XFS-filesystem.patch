@@ -1,0 +1,42 @@
+From 13bb8c2daca0f1c1099ce6ba9dcb23319f7955d0 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 20 May 2020 16:22:52 +0200
+Subject: [PATCH 2/2] Fix limits setting on XFS filesystem
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+xfs_commit_dquot() always set FS_DQ_LIMIT_MASK when calling
+Q_XFS_SETQLIM. So far this wasn't a problem since quota tools didn't
+support setting of anything else for XFS but now that kernel will start
+supporting setting of grace times for XFS, we need to be more careful
+and set limits bits only if we really want to update them. Also
+FS_DQ_LIMIT_MASK contains real-time limits as well. Quota tools
+currently don't support them in any way so avoid telling kernel to set
+them.
+
+Reviewed-by: Eric Sandeen <sandeen@redhat.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Petr Písař <ppisar@redhat.com>
+---
+ quotaio_xfs.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/quotaio_xfs.c b/quotaio_xfs.c
+index a4d6f67..3333bb1 100644
+--- a/quotaio_xfs.c
++++ b/quotaio_xfs.c
+@@ -165,7 +165,9 @@ static int xfs_commit_dquot(struct dquot *dquot, int flags)
+ 		if (flags & COMMIT_USAGE) /* block usage */
+ 			xdqblk.d_fieldmask |= FS_DQ_BCOUNT;
+ 	} else {
+-		xdqblk.d_fieldmask |= FS_DQ_LIMIT_MASK;
++		if (flags & COMMIT_LIMITS) /* warn/limit */
++			xdqblk.d_fieldmask |= FS_DQ_BSOFT | FS_DQ_BHARD |
++						FS_DQ_ISOFT | FS_DQ_IHARD;
+ 		if (flags & COMMIT_TIMES) /* indiv grace period */
+ 			xdqblk.d_fieldmask |= FS_DQ_TIMER_MASK;
+ 	}
+-- 
+2.25.4
+

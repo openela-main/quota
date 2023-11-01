@@ -1,0 +1,56 @@
+From fdd774bf08e56872ae4c0420e0f01efa25e715d6 Mon Sep 17 00:00:00 2001
+From: Eric Sandeen <sandeen@redhat.com>
+Date: Fri, 8 May 2020 14:36:46 -0500
+Subject: [PATCH] quota-tools: pass quota type to QCMD for Q_XFS_GETQSTAT
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Older kernels ignored the type sent to Q_XFS_GETQSTAT, and returned
+timer information for the first quota type which was found to be
+enabled.
+
+As of 555b2c3da1fc ("quota: honor quota type in Q_XGETQSTAT[V] calls")
+the kernel now honors the quota type requested, so send that from the
+Q_XFS_GETQSTAT calls in quota tools.
+
+Older kernels ignore the type altogether, so this change should be
+backwards compatible with no change in behavior.
+
+Signed-off-by: Eric Sandeen <sandeen@redhat.com>
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Petr Písař <ppisar@redhat.com>
+---
+ quotaio_xfs.c | 2 +-
+ quotaon_xfs.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/quotaio_xfs.c b/quotaio_xfs.c
+index 56daf89..b22c7b4 100644
+--- a/quotaio_xfs.c
++++ b/quotaio_xfs.c
+@@ -81,7 +81,7 @@ static int xfs_init_io(struct quota_handle *h)
+ 	struct xfs_mem_dqinfo info;
+ 	int qcmd;
+ 
+-	qcmd = QCMD(Q_XFS_GETQSTAT, 0);
++	qcmd = QCMD(Q_XFS_GETQSTAT, h->qh_type);
+ 	memset(&info, 0, sizeof(struct xfs_mem_dqinfo));
+ 	if (quotactl(qcmd, h->qh_quotadev, 0, (void *)&info) < 0)
+ 		return -1;
+diff --git a/quotaon_xfs.c b/quotaon_xfs.c
+index d557a75..d137240 100644
+--- a/quotaon_xfs.c
++++ b/quotaon_xfs.c
+@@ -32,7 +32,7 @@ static int xfs_state_check(int qcmd, int type, int flags, const char *dev, int r
+ 	if (flags & STATEFLAG_ALL)
+ 		return 0;	/* noop */
+ 
+-	if (quotactl(QCMD(Q_XFS_GETQSTAT, 0), dev, 0, (void *)&info) < 0) {
++	if (quotactl(QCMD(Q_XFS_GETQSTAT, type), dev, 0, (void *)&info) < 0) {
+ 		errstr(_("quotactl() on %s: %s\n"), dev, strerror(errno));
+ 		return -1;
+ 	}
+-- 
+2.25.4
+
