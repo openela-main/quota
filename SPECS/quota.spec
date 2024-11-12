@@ -12,8 +12,8 @@
 
 Name:       quota
 Epoch:      1
-Version:    4.06
-Release:    6%{?dist}
+Version:    4.09
+Release:    2%{?dist}
 Summary:    System administration tools for monitoring users' disk usage
 # quota_nld.c, quotaio_xfs.h:       GPLv2
 # bylabel.c copied from util-linux: GPLv2+
@@ -59,19 +59,12 @@ Source4:    rpc-rquotad.sysconfig
 Patch0:     quota-4.06-warnquota-configuration-tunes.patch
 # Fix parsing a TCP port number
 Patch1:     quota-4.03-Validate-upper-bound-of-RPC-port.patch
-# Remove a dead code from process_file(), in upstream after 4.06,
-# <https://sourceforge.net/p/linuxquota/patches/54/>
-Patch2:     quota-4.06-quotacheck-Remove-a-dead-code-from-process_file.patch
-# Fix a compilation warning in quotaops.c, in upstream after 4.06
-Patch3:     quota-4.06-quotaops-fix-compilation-warning.patch
-# Warn when kernel XFS large time stamp does fit into (32-bit) user-space
-# time_t, in upstream after 4.06
-Patch4:     quota-4.06-quotaio_xfs-Warn-when-large-kernel-timestamps-cannot.patch
-# Do not use a pointless compiler-internal __P() macro, in upstream after 4.06
-Patch5:     quota-4.06-Drop-sys-cdefs.h-usage.patch
-# Fix sa_mask initialization when registering PID file removal,
-# upstream bug #141, in upstream after 4.06
-Patch6:     quota-4.06-quota_nld-Initialize-sa_mask-when-registering-PID-fi.patch
+Patch2:     quota-4.10-Rename-searched_dir-sd_dir-to-sd_isdir.patch
+Patch3:     quota-4.10-Add-quotactl_fd-support.patch
+Patch4:     quota-4.10-Enable-support-for-tmpfs-quotas.patch
+Patch5:     quota-4.10-quotaio_xfs-Fix-error-handling-in-xfs_read_dquot.patch
+Patch6:     quota-4.10-quotaio_xfs-Fix-quota-tools-on-XFS.patch
+
 BuildRequires:  autoconf
 BuildRequires:  automake
 BuildRequires:  bash
@@ -348,6 +341,15 @@ make check
 
 
 %changelog
+* Fri Jul 26 2024 Pavel Reichl <preichl@redhat.com> - 1:4.09-2
+- Fix regression
+- Related: RHEL-50644
+
+* Mon Jun 10 2024 Pavel Reichl <preichl@redhat.com> - 1:4.09-1
+- Update to new upstream version
+- Add tmpfs quota support
+- Remove rhel-only patches that were merged upstream
+
 * Tue Aug 10 2021 Mohan Boddu <mboddu@redhat.com> - 1:4.06-6
 - Rebuilt for IMA sigs, glibc 2.34, aarch64 flags
   Related: rhbz#1991688
