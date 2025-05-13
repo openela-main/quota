@@ -13,7 +13,7 @@
 Name:       quota
 Epoch:      1
 Version:    4.09
-Release:    2%{?dist}
+Release:    4%{?dist}
 Summary:    System administration tools for monitoring users' disk usage
 # quota_nld.c, quotaio_xfs.h:       GPLv2
 # bylabel.c copied from util-linux: GPLv2+
@@ -64,6 +64,7 @@ Patch3:     quota-4.10-Add-quotactl_fd-support.patch
 Patch4:     quota-4.10-Enable-support-for-tmpfs-quotas.patch
 Patch5:     quota-4.10-quotaio_xfs-Fix-error-handling-in-xfs_read_dquot.patch
 Patch6:     quota-4.10-quotaio_xfs-Fix-quota-tools-on-XFS.patch
+Patch7:     quota-master-quotaio_xfs-Fix-memory-leak.patch
 
 BuildRequires:  autoconf
 BuildRequires:  automake
@@ -192,6 +193,7 @@ Linux/UNIX environment.
 %patch4 -p1
 %patch5 -p1
 %patch6 -p1
+%patch7 -p1
 # Regenerate build scripts
 autoreconf -f -i
 
@@ -341,6 +343,14 @@ make check
 
 
 %changelog
+* Thu Sep 12 2024 Pavel Reichl <preichl@redhat.com> - 1:4.09-4
+- Fix patch application
+- Related: RHEL-50914
+
+* Thu Sep 12 2024 Pavel Reichl <preichl@redhat.com> - 1:4.09-3
+- Fix memory leak
+- Related: RHEL-50914
+
 * Fri Jul 26 2024 Pavel Reichl <preichl@redhat.com> - 1:4.09-2
 - Fix regression
 - Related: RHEL-50644
