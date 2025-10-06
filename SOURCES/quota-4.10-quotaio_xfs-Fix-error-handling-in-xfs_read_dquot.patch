@@ -1,0 +1,36 @@
+From dba8c5ca95516b9550fc44b2a476ceca60ee4b38 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Tue, 7 May 2024 12:55:30 +0200
+Subject: [PATCH] quotaio_xfs: Fix error handling in xfs_read_dquot()
+
+When quotactl(2) fails, xfs_read_dquot() will happily return zero-filled
+structure. This is fine when the user structure does not exist but it is
+wrong when there's other error (like EACCESS). Fix the error handling.
+
+Signed-off-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Pavel Reichl <preichl@redhat.com>
+---
+ quotaio_xfs.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/quotaio_xfs.c b/quotaio_xfs.c
+index d742f9c..040e7d8 100644
+--- a/quotaio_xfs.c
++++ b/quotaio_xfs.c
+@@ -176,7 +176,12 @@ static struct dquot *xfs_read_dquot(struct quota_handle *h, qid_t id)
+ 	qcmd = QCMD(Q_XFS_GETQUOTA, h->qh_type);
+ 	if (do_quotactl(qcmd, h->qh_quotadev, h->qh_dir,
+ 			id, (void *)&xdqblk) < 0) {
+-		;
++		/*
++		 * ENOENT means the structure just does not exist - return all
++		 * zeros. Otherwise return failure.
++		 */
++		if (errno != ENOENT)
++			return NULL;
+ 	}
+ 	else {
+ 		xfs_kern2utildqblk(&dquot->dq_dqb, &xdqblk);
+-- 
+2.45.2
+
